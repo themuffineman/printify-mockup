@@ -51,10 +51,24 @@ app.post('/get-mockup', async (req,res)=>{
         await page.setViewport({ width: 1440, height: 950 });
         await page.goto('https://printify.com/app/editor/77/99')
         console.log('Page Navigated')
+
+        try {
+            const ghostBtn = await page.waitForSelector('button[data-testid="button"].button.ghost.small', {timeout: 5000})
+            console.log('Firt Ghost Btn Appeared')
+            await ghostBtn.click()
+    
+            const ghostBtn2 = await page.waitForSelector('button[data-testid="button"].button.primary.small', {timeout: 5000})
+            console.log('Second Ghost Btn Appeared')
+            await ghostBtn2.click()
+        } catch (error) {
+            console.log('Ghost Buttons Didnt Appear, error', error)
+        }
+
         const activateUpload = await page.waitForSelector('button[data-testid="leftBarOption"][data-analyticsid="newUploadOption"]')
         console.log('Upload Button Visisble')
         await activateUpload.click()
         console.log('Activate Upload Button Clicked!')
+
         await page.waitForSelector('button[data-testid="addMyDeviceLayerButton"][data-analyticsid="addMyDeviceLayerButton"]');
         console.log('Actual Upload Button Visible')
 
