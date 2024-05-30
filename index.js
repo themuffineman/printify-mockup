@@ -48,6 +48,7 @@ app.post('/get-mockup', async (req,res)=>{
         page = await browser.newPage()
         page.setDefaultNavigationTimeout(900000)
         page.setDefaultTimeout(900000)
+        await page.setViewport({ width: 1440, height: 950 });
         await page.goto('https://printify.com/app/editor/77/99')
         console.log('Page Navigated')
         const activateUpload = await page.waitForSelector('button[data-testid="leftBarOption"][data-analyticsid="newUploadOption"]')
@@ -133,24 +134,39 @@ function modifyUrl(url){
 
     return newUrl
 }
-async function downloadImage(url){
+async function downloadImage(url) {
     try {
-      const response = await fetch(url);
-      if(!response){throw new Error('Error Fetching Image')}
-      const blob = await response.blob() 
+        let blob;
 
-      const readerInstance = new FileReader()
-      readerInstance.readAsDataURL(blob)
-      readerInstance.onload = (e) =>{
-        console.log('the string is this long', e.target.result.length)
-        return e.target.result
-      }
+        if (url.startsWith('blob:')) {
+            // Handle blob URLs
+            blob = await fetch(url).then(response => response.blob());
+        } else {
+            // Handle regular URLs
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error('Error Fetching Image');
+            }
+            blob = await response.blob();
+        }
 
-    } catch (error){
-      console.error(`Error downloading image: ${error}`);
-      return null;
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                console.log('The string is this long:', reader.result.length);
+                resolve(reader.result);
+            };
+            reader.onerror = (error) => {
+                reject(new Error(`Error reading blob as data URL: ${error}`));
+            };
+            reader.readAsDataURL(blob);
+        });
+    } catch (error) {
+        console.error(`Error downloading image: ${error}`);
+        return null;
     }
 }
+
 async function downloadImageToFile(url){
     const imagePath = 'image.png'
     const response = await axios({
