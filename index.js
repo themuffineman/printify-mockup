@@ -48,21 +48,22 @@ app.post('/get-mockup', async (req,res)=>{
         page = await browser.newPage()
         page.setDefaultNavigationTimeout(900000)
         page.setDefaultTimeout(900000)
-        await page.setViewport({ width: 1440, height: 950 });
+        await page.setViewport({ width: 1330, height: 800 });
         await page.goto('https://printify.com/app/editor/77/99')
         console.log('Page Navigated')
 
-        try {
-            const ghostBtn = await page.waitForSelector('button[data-testid="button"].button.ghost.small', {timeout: 5000})
-            console.log('Firt Ghost Btn Appeared')
-            await ghostBtn.click()
-    
-            const ghostBtn2 = await page.waitForSelector('button[data-testid="button"].button.primary.small', {timeout: 5000})
-            console.log('Second Ghost Btn Appeared')
-            await ghostBtn2.click()
-        } catch (error) {
-            console.log('Ghost Buttons Didnt Appear, error', error)
-        }
+        const ghostBtn = await page.waitForSelector('pfy-button[data-testid="closeButton"][data-analyticsid="onboardingIntroExploreByMyselfBtn"]')
+        console.log('First Ghost Btn Appeared')
+        await ghostBtn.click()
+
+        const ghostBtn2 = await page.waitForSelector('pfy-button[data-testid="confirmButton"][data-analyticsid="onboardingOutroGotItBtn"]')
+        console.log('Second Ghost Btn Appeared')
+        await ghostBtn2.click()
+        // try {
+
+        // } catch (error) {
+        //     console.log('Ghost Buttons Didnt Appear')
+        // }
 
         const activateUpload = await page.waitForSelector('button[data-testid="leftBarOption"][data-analyticsid="newUploadOption"]')
         console.log('Upload Button Visisble')
@@ -87,32 +88,44 @@ app.post('/get-mockup', async (req,res)=>{
         await page.keyboard.down('Control');
         await page.keyboard.press(']');
         await page.keyboard.up('Control');
-        console.log('Button Clicked')
+        console.log('Ctrl+] Button Clicked')
+        // await new Promise(resolve => setTimeout(resolve, 30000))
 
         //preview section confirmation
-        await page.waitForSelector('button[data-testid="button"].button.secondary.medium[type="button"]')
-        await page.waitForSelector('ul[_ngcontent-ng-c2591322821][pfddrawerinitialelement].grid.ink-grid.ng-star-inserted')
+        await page.waitForSelector('pfd-preview-sidebar')
+        // await page.waitForSelector('ul[_ngcontent-ng-c2591322821][pfddrawerinitialelement].grid.ink-grid.ng-star-inserted')
         console.log('Now Previewing the Mockups')
+        await new Promise(resolve => setTimeout(resolve, 20000))
+        
 
         const mockupSelectors = [
-            'ul[_ngcontent-ng-c2591322821][pfddrawerinitialelement].grid.ink-grid.ng-star-inserted > li:nth-child(1)',
-            'ul[_ngcontent-ng-c2591322821][pfddrawerinitialelement].grid.ink-grid.ng-star-inserted > li:nth-child(4)',
-            'ul[_ngcontent-ng-c2591322821][pfddrawerinitialelement].grid.ink-grid.ng-star-inserted > li:nth-child(6)',
-            'ul[_ngcontent-ng-c2591322821][pfddrawerinitialelement].grid.ink-grid.ng-star-inserted > li:nth-child(7)'
+            '#appShell > div.content-container > pfa-designer > pfa-designer-loader > designer-root > pfd-component-lazy-loader > pfd-preview-layout > div > div > div.sidebar > pfd-preview-sidebar > div.preview-content > pfd-preview-view-selector > ul > li:nth-child(1)',
+            '#appShell > div.content-container > pfa-designer > pfa-designer-loader > designer-root > pfd-component-lazy-loader > pfd-preview-layout > div > div > div.sidebar > pfd-preview-sidebar > div.preview-content > pfd-preview-view-selector > ul > li:nth-child(4)',
+            '#appShell > div.content-container > pfa-designer > pfa-designer-loader > designer-root > pfd-component-lazy-loader > pfd-preview-layout > div > div > div.sidebar > pfd-preview-sidebar > div.preview-content > pfd-preview-view-selector > ul > li:nth-child(6)',
+            '#appShell > div.content-container > pfa-designer > pfa-designer-loader > designer-root > pfd-component-lazy-loader > pfd-preview-layout > div > div > div.sidebar > pfd-preview-sidebar > div.preview-content > pfd-preview-view-selector > ul > li:nth-child(7)'
+
         ];
         
         const mockupImages = []
         for (const selector of mockupSelectors) {
             await page.click(selector)
             console.log('Clicked the image selector')
-            await new Promise(resolve => setTimeout(resolve, 30000))
-            const src = await page.$eval('img[data-testid="image"].image.ng-star-inserted', img => img.src)
-            console.log("Here's the url", src)
-            const base64File = await downloadImage(src)
-            mockupImages.push(base64File)
+            await new Promise(resolve => setTimeout(resolve, 5000))
+            const blobUrl = await page.$eval('#appShell > div.content-container > pfa-designer > pfa-designer-loader > designer-root > pfd-component-lazy-loader > pfd-preview-layout > div > div > div.content > pfd-preview-main > div > img', img => img.src)
+            console.log("Here's the url", blobUrl)
+
+            const base64Image = await page.evaluate(async (blobUrl) => {
+                const response = await fetch(blobUrl);
+                const blob = await response.blob();
+                const arrayBuffer = await blob.arrayBuffer();
+                const base64String = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+                return base64String;
+            }, blobUrl);
+            // console.log('The Image is size:', base64Image.length)
+            mockupImages.push(base64Image)
         }
 
-        return res.json({images: mockupImages})
+        return res.json({images: mockupImages}).status(200)
     } catch (error) {
         console.error(error)
         return res.status(500).send("Error occured, oopsie daisy")
