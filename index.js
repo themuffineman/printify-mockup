@@ -42,13 +42,14 @@ app.post('/get-mockup', async (req,res)=>{
         browser = await puppeteer.launch({
             timeout: 120000,
             protocolTimeout: 600000,
-            headless: false,
+            headless: true,
         })
+        console.log('Puppeterr is up and running')
 
         page = await browser.newPage()
         page.setDefaultNavigationTimeout(900000)
         page.setDefaultTimeout(900000)
-        await page.setViewport({ width: 1330, height: 800 });
+        await page.setViewport({ width: 1336, height: 800 });
         await page.goto('https://printify.com/app/editor/77/99')
         console.log('Page Navigated')
 
@@ -117,11 +118,13 @@ app.post('/get-mockup', async (req,res)=>{
             const base64Image = await page.evaluate(async (blobUrl) => {
                 const response = await fetch(blobUrl);
                 const blob = await response.blob();
-                const arrayBuffer = await blob.arrayBuffer();
-                const base64String = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-                return base64String;
-            }, blobUrl);
-            // console.log('The Image is size:', base64Image.length)
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result.split(',')[1]); // Remove the "data:..." prefix
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            }, blobUrl)
             mockupImages.push(base64Image)
         }
 
