@@ -125,7 +125,7 @@ app.post('/get-mockup', async (req,res)=>{
                     reader.readAsDataURL(blob);
                 });
             }, blobUrl)
-            mockupImages.push(base64Image)
+            mockupImages.push("data:image/png;base64," + base64Image )
         }
 
         return res.json({images: mockupImages}).status(200)
