@@ -23,13 +23,18 @@ let browser = await puppeteer.launch({
 })
 let page;
 async function openPages(){
-    page = await browser.newPage()
-    page.setDefaultNavigationTimeout(900000)
-    page.setDefaultTimeout(900000)
-    await page.setViewport({ width: 1336, height: 800 });
-    await page.goto('https://printify.com/app/editor/618/41')
-    console.log('Page Navigated')
-    return 'Page Opened'
+    try {
+        page = await browser.newPage()
+        page.setDefaultNavigationTimeout(900000)
+        page.setDefaultTimeout(900000)
+        await page.setViewport({ width: 1336, height: 800 });
+        await page.goto('https://printify.com/app/editor/618/41')
+        console.log('Page Navigated')
+        return 'Page Opened'
+        
+    } catch (error) {
+        
+    }
 
 }
 const isPageOpen = await openPages()
@@ -54,12 +59,12 @@ app.post('/get-mockup', async (req,res)=>{
     // let page;
     let filename = 'image.png'
     try {
-        // console.log('Received Request')
-        // const {url} = req.body
-        // console.log('Received Url', url)
-        // const modifiedUrl = modifyUrl(url)
-        // console.log('Modified Url', modifiedUrl)
-        // await downloadImageToFile(modifiedUrl)
+        console.log('Received Request')
+        const {url} = req.body
+        console.log('Received Url', url)
+        const modifiedUrl = modifyUrl(url)
+        console.log('Modified Url', modifiedUrl)
+        await downloadImageToFile(modifiedUrl)
 
         // browser = await puppeteer.launch({
         //     timeout: 120000,
