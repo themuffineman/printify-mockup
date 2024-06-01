@@ -15,6 +15,28 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const PORT = 8080
 const app = express()
+
+let browser = await puppeteer.launch({
+    timeout: 120000,
+    protocolTimeout: 600000,
+    headless: true,
+})
+let page;
+async function openPages(){
+    page = await browser.newPage()
+    page.setDefaultNavigationTimeout(900000)
+    page.setDefaultTimeout(900000)
+    await page.setViewport({ width: 1336, height: 800 });
+    await page.goto('https://printify.com/app/editor/618/41')
+    console.log('Page Navigated')
+    return 'Page Opened'
+
+}
+const isPageOpen = await openPages()
+console.log(isPageOpen)
+
+console.log('Puppeterr is up and running')
+
 app.listen(PORT, ()=> {
     console.log('Server up on port:', PORT)
 })
@@ -28,30 +50,24 @@ app.use(bodyParser.json({
 }))
 
 app.post('/get-mockup', async (req,res)=>{
-    let browser;
-    let page;
+    // let browser;
+    // let page;
     let filename = 'image.png'
     try {
-        console.log('Received Request')
-        const {url} = req.body
-        console.log('Received Url', url)
-        const modifiedUrl = modifyUrl(url)
-        console.log('Modified Url', modifiedUrl)
-        await downloadImageToFile(modifiedUrl)
+        // console.log('Received Request')
+        // const {url} = req.body
+        // console.log('Received Url', url)
+        // const modifiedUrl = modifyUrl(url)
+        // console.log('Modified Url', modifiedUrl)
+        // await downloadImageToFile(modifiedUrl)
 
-        browser = await puppeteer.launch({
-            timeout: 120000,
-            protocolTimeout: 600000,
-            headless: true,
-        })
-        console.log('Puppeterr is up and running')
+        // browser = await puppeteer.launch({
+        //     timeout: 120000,
+        //     protocolTimeout: 600000,
+        //     headless: true,
+        // })
+        // console.log('Puppeterr is up and running')
 
-        page = await browser.newPage()
-        page.setDefaultNavigationTimeout(900000)
-        page.setDefaultTimeout(900000)
-        await page.setViewport({ width: 1336, height: 800 });
-        await page.goto('https://printify.com/app/editor/77/99')
-        console.log('Page Navigated')
 
         const ghostBtn = await page.waitForSelector('pfy-button[data-testid="closeButton"][data-analyticsid="onboardingIntroExploreByMyselfBtn"]')
         console.log('First Ghost Btn Appeared')
@@ -101,9 +117,9 @@ app.post('/get-mockup', async (req,res)=>{
 
         const mockupSelectors = [
             '#appShell > div.content-container > pfa-designer > pfa-designer-loader > designer-root > pfd-component-lazy-loader > pfd-preview-layout > div > div > div.sidebar > pfd-preview-sidebar > div.preview-content > pfd-preview-view-selector > ul > li:nth-child(1)',
-            '#appShell > div.content-container > pfa-designer > pfa-designer-loader > designer-root > pfd-component-lazy-loader > pfd-preview-layout > div > div > div.sidebar > pfd-preview-sidebar > div.preview-content > pfd-preview-view-selector > ul > li:nth-child(4)',
-            '#appShell > div.content-container > pfa-designer > pfa-designer-loader > designer-root > pfd-component-lazy-loader > pfd-preview-layout > div > div > div.sidebar > pfd-preview-sidebar > div.preview-content > pfd-preview-view-selector > ul > li:nth-child(6)',
-            '#appShell > div.content-container > pfa-designer > pfa-designer-loader > designer-root > pfd-component-lazy-loader > pfd-preview-layout > div > div > div.sidebar > pfd-preview-sidebar > div.preview-content > pfd-preview-view-selector > ul > li:nth-child(7)'
+            '#appShell > div.content-container > pfa-designer > pfa-designer-loader > designer-root > pfd-component-lazy-loader > pfd-preview-layout > div > div > div.sidebar > pfd-preview-sidebar > div.preview-content > pfd-preview-view-selector > ul > li:nth-child(2)',
+            '#appShell > div.content-container > pfa-designer > pfa-designer-loader > designer-root > pfd-component-lazy-loader > pfd-preview-layout > div > div > div.sidebar > pfd-preview-sidebar > div.preview-content > pfd-preview-view-selector > ul > li:nth-child(3)',
+            // '#appShell > div.content-container > pfa-designer > pfa-designer-loader > designer-root > pfd-component-lazy-loader > pfd-preview-layout > div > div > div.sidebar > pfd-preview-sidebar > div.preview-content > pfd-preview-view-selector > ul > li:nth-child(7)'
 
         ];
         
@@ -133,8 +149,8 @@ app.post('/get-mockup', async (req,res)=>{
         console.error(error)
         return res.status(500).send("Error occured, oopsie daisy")
     }finally {
-        if (browser) {
-            await browser.close();
+        if (page) {
+            await page.close();
         }
         fs.unlink('./image.png', (err) => {
             if (err) {
